@@ -1,14 +1,14 @@
 package middlewares
 
 import (
+	"blog/database"
+	"blog/models"
+	"blog/utils"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
-	"goBlog/database"
-	"goBlog/models"
-	"goBlog/utils"
 	"strconv"
 	"strings"
 )
@@ -20,50 +20,6 @@ func AuthenticationMiddleware(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 	return c.Next()
-}
-
-// IsAuthorized
-// if permission groups name is nil, group name on link is become permission group name
-func IsAuthorized(c *fiber.Ctx, groupName string, targetID uint) bool {
-	db := database.DB
-
-	var authedUser, err = SelectAuthenticatedUser(c, db)
-	if err != nil {
-		fmt.Println(authedUser)
-		return false
-	}
-
-	var authRole models.Role
-	db.NewSelect().Model(&authRole).Where("\"role\".\"id\" = ?", authedUser.RoleID).Relation("Permissions").Scan(context.Background())
-
-	if groupName == "" {
-		groupName, _ = strings.CutPrefix(c.Path(), "/api")
-		groupName, _, _ = strings.Cut(groupName[1:], "/")
-	}
-	if groupName[len(groupName)-1:] != "s" {
-		groupName = groupName + "s"
-	}
-
-	var modelMap = make(map[string]any)
-	err = db.NewSelect().Model(&modelMap).Table(groupName).Where("id = ?", targetID).Scan(context.Background())
-	if err != nil {
-		fmt.Println("AUTHORIZATION:", err)
-	}
-
-	if groupName == "blogs" && modelMap["user_id"] == int64(authedUser.ID) {
-		fmt.Println("is in?")
-		return true
-	} else if groupName == "users" && modelMap["id"] == int64(authedUser.ID) {
-		return true
-	}
-
-	for _, permission := range authRole.Permissions {
-		if permission.Name == "edit_"+groupName {
-			return true
-		}
-	}
-	return false
-
 }
 
 func AuthorizationMiddleware(c *fiber.Ctx) error {
