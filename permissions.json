@@ -1,0 +1,11 @@
+{
+  "1": "edit_roles",
+  "2": "edit_blogs",
+  "3": "edit_users",
+  "4": "edit_permissions",
+
+  "5": "read_roles",
+  "6": "read_blogs",
+  "7": "read_users",
+  "8": "read_permissions"
+}
