@@ -39,11 +39,9 @@ func AuthorizationMiddleware(c *fiber.Ctx) error {
 		return c.Next()
 	}
 	groupName, _, _ = strings.Cut(groupName[1:], "/")
-	fmt.Println(groupName)
 	if groupName[len(groupName)-1:] != "s" {
 		groupName = groupName + "s"
 	}
-	fmt.Println(groupName)
 
 	var modelMap = make(map[string]any)
 	parameter := strings.Split(c.Path(), "/")
@@ -52,7 +50,7 @@ func AuthorizationMiddleware(c *fiber.Ctx) error {
 		err = db.NewSelect().Model(&modelMap).Table(groupName).Where("id = ?", targetID).Scan(context.Background())
 	}
 
-	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && modelMap["user_id"] == authedUser.ID) {
+	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && fmt.Sprintf("%v", modelMap["user_id"]) == fmt.Sprintf("%d", authedUser.ID)) {
 		return c.Next()
 	} else if groupName == "users" && modelMap["id"] == authedUser.ID {
 		return c.Next()
