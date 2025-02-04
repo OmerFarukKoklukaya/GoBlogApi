@@ -29,14 +29,13 @@ func AuthorizationMiddleware(c *fiber.Ctx) error {
 		fmt.Println(err)
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
+
 	var authedRole models.Role
 	db.NewSelect().Model(&authedRole).Where("\"role\".\"id\" = ?", authedUser.RoleID).Relation("Permissions").Scan(context.Background())
 
-	groupName, isCut := strings.CutPrefix(c.Path(), "/api")
-	if !isCut {
-		groupName, _ = strings.CutPrefix(c.Path(), "/admin")
-	}
-	if groupName == "" {
+	groupName, _ := strings.CutPrefix(c.Path(), "/api")
+
+	if groupName == "/" {
 		return c.Next()
 	}
 	groupName, _, _ = strings.Cut(groupName[1:], "/")
@@ -49,15 +48,13 @@ func AuthorizationMiddleware(c *fiber.Ctx) error {
 	var modelMap = make(map[string]any)
 	parameter := strings.Split(c.Path(), "/")
 	targetID, err := strconv.Atoi(parameter[len(parameter)-1])
-	fmt.Println(targetID)
 	if err == nil {
 		err = db.NewSelect().Model(&modelMap).Table(groupName).Where("id = ?", targetID).Scan(context.Background())
 	}
-	fmt.Println(&modelMap)
 
-	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && modelMap["user_id"] == int64(authedUser.ID)) {
+	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && modelMap["user_id"] == authedUser.ID) {
 		return c.Next()
-	} else if groupName == "users" && modelMap["id"] == int64(authedUser.ID) {
+	} else if groupName == "users" && modelMap["id"] == authedUser.ID {
 		return c.Next()
 	}
 

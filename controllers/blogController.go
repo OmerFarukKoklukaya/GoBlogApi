@@ -12,15 +12,19 @@ import (
 
 var ctx = context.Background()
 
-func GetBlog(c *fiber.Ctx) error {
+func SelectBlog(c *fiber.Ctx) error {
 	blogId, err := c.ParamsInt("id")
 	if err != nil || blogId <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Error": "Wrong url path"})
 	}
-	blog := &models.Blog{}
+	blog := models.Blog{}
 	db := database.DB
 
-	db.NewSelect().Model(&blog).Where("\"blog\".\"id\" = ?", blogId).Relation("User").Scan(ctx)
+	err = db.NewSelect().Model(&blog).Where("\"blog\".\"id\" = ?", blogId).Relation("User").Scan(ctx)
+	if err != nil {
+		fmt.Println(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"Error": err})
+	}
 
 	if blog.User == nil {
 		blog.User = &models.User{
@@ -33,24 +37,26 @@ func GetBlog(c *fiber.Ctx) error {
 	})
 }
 
-func GetBlogs(c *fiber.Ctx) error {
+func SelectBlogs(c *fiber.Ctx) error {
 	limit, err := strconv.Atoi(c.Query("limit", "5"))
-	if err != nil || limit <= 0 {
+	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
-
 	page, err := strconv.Atoi(c.Query("page", "1"))
-	if err != nil || page <= 0 {
+	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
+	if limit == 0 && page == 0 {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+	offset := (page - 1) * limit
 
 	db := database.DB
-
-	offset := (page - 1) * limit
 	var blogs []models.Blog
-	blogLen, _ := db.NewSelect().Model(&blogs).Relation("User").Order("id DESC").Limit(limit).Offset(offset).ScanAndCount(ctx)
-
-	paging := models.Pagination{}.Paginate(page, blogLen, limit)
+	blogLen, err := db.NewSelect().Model(&blogs).Relation("User").Order("id DESC").Limit(limit).Offset(offset).ScanAndCount(ctx)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
 
 	for _, blog := range blogs {
 		if blog.User == nil {
@@ -58,15 +64,17 @@ func GetBlogs(c *fiber.Ctx) error {
 		}
 	}
 
+	paginate := models.Pagination{}.Paginate(page, blogLen, limit)
+
 	return c.JSON(models.ViewData{
 		Data: blogs,
 		Meta: models.Meta{
-			Pagination: paging,
+			Pagination: paginate,
 		},
 	})
 }
 
-func GetBlogsByUser(c *fiber.Ctx) error {
+func SelectBlogsByUser(c *fiber.Ctx) error {
 	limit, err := strconv.Atoi(c.Query("limit", "5"))
 	if err != nil || limit <= 0 {
 		return c.SendStatus(fiber.StatusBadRequest)
@@ -87,7 +95,7 @@ func GetBlogsByUser(c *fiber.Ctx) error {
 
 	blogs := []models.Blog{}
 	blogLen, _ := db.NewSelect().Model(&blogs).Where("user_id = ?", userId).Order("id DESC").Limit(limit).Offset(offset).ScanAndCount(ctx)
-	for i, _ := range blogs {
+	for i := range blogs {
 		if blogs[i].User == nil {
 			blogs[i].User = &models.User{Name: "this author deleted"}
 		}

@@ -14,7 +14,7 @@ var ctx = context.Background()
 var DB *bun.DB
 
 func ConnectDatabase() {
-	dsn := "postgres://postgres:user@localhost:5432/blog?sslmode=disable"
+	dsn := "postgres://postgres:postgres@localhost:5432/blog?sslmode=disable"
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	DB = bun.NewDB(sqldb, pgdialect.New())
 }

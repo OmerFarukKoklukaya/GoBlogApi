@@ -17,7 +17,7 @@ type User struct {
 	Password  []byte    `bun:"password" json:"password"`
 	Blogs     []*Blog   `bun:"rel:has-many,join:id=user_id" json:"blogs"`
 	Role      *Role     `bun:"rel:belongs-to,join:role_id=id" json:"role"`
-	RoleID    uint      `bun:"role_id" json:"role_id"`
+	RoleID    uint      `bun:"role_id" json:"roleID"`
 }
 
 const hashCycle = 3

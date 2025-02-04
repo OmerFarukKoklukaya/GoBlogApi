@@ -13,9 +13,9 @@ type Permission struct {
 
 type RoleToPermission struct {
 	Role         *Role       `bun:"rel:belongs-to,join:role_id=id"`
-	RoleID       uint        `bun:"role_id" json:"role_id"`
+	RoleID       uint        `bun:"role_id" json:"roleID"`
 	Permission   *Permission `bun:"rel:belongs-to,join:permission_id=id"`
-	PermissionID uint        `bun:"permission_id" json:"permission_id"`
+	PermissionID uint        `bun:"permission_id" json:"permissionID"`
 }
 
 func (role Role) IsHaveEditPermission() bool {
