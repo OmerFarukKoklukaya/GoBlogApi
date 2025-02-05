@@ -21,6 +21,7 @@ func Router(app *fiber.App) {
 	users.Get("/", controllers.SelectUsers)
 	users.Get("/:id", controllers.SelectUser)
 	users.Get("/:id/comments", controllers.SelectCommentByUser)
+	users.Put("/password", controllers.UpdatePassword)
 
 	blogs.Get("/", controllers.SelectBlogs)
 	blogs.Get("/:id", controllers.SelectBlog)
@@ -34,7 +35,6 @@ func Router(app *fiber.App) {
 
 	api.Use(middlewares.AuthorizationMiddleware)
 
-	users.Put("/password", controllers.UpdatePassword)
 	users.Get("/:id/blogs", controllers.SelectBlogsByUser)
 	users.Post("/", controllers.AddUser)
 	users.Put("/:id", controllers.UpdateUser)

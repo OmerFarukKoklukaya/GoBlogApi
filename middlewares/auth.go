@@ -50,7 +50,7 @@ func AuthorizationMiddleware(c *fiber.Ctx) error {
 		err = db.NewSelect().Model(&modelMap).Table(groupName).Where("id = ?", targetID).Scan(context.Background())
 	}
 
-	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && fmt.Sprintf("%v", modelMap["user_id"]) == fmt.Sprintf("%d", authedUser.ID)) {
+	if (groupName == "blogs" || groupName == "comments") && (c.Route().Method == "POST" || fmt.Sprintf("%v", modelMap["user_id"]) == fmt.Sprintf("%d", authedUser.ID)) {
 		return c.Next()
 	} else if groupName == "users" && modelMap["id"] == authedUser.ID {
 		return c.Next()
